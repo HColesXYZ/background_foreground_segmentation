@@ -232,7 +232,7 @@ void Creator::projectPointCloud(
         // Draw on preview image -> will be stored for visual inspection
         cv::circle(preview_img, pixel, 1,
                    CV_RGB(distance_to_mesh, 255 - distance_to_mesh, 0),
-                   CV_FILLED, 8, 0);
+                   cv::FILLED, 8, 0);
       }
       // Draw on labels groundtruth image
       cv::circle(labels_img, pixel, 1, cv::Scalar(distance_to_mesh));

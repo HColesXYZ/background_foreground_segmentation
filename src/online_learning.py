@@ -14,6 +14,7 @@ import time
 import numpy as np
 import random
 
+import bfseg.data.nyu.Nyu_depth_v2_labeled
 import bfseg.data.nyu_subsampled
 from bfseg.utils.models import create_model
 from bfseg.utils.losses import BalancedIgnorantCrossEntropyLoss
@@ -23,7 +24,7 @@ from bfseg.utils.images import augmentation
 tf.executing_eagerly()
 
 nyu_data = iter(
-    tfds.load('nyu_subsampled', split='full',
+    tfds.load('nyu_depth_v2', split='train',
               as_supervised=True).cache().repeat().map(augmentation))
 
 LABELED_BUFFER = []

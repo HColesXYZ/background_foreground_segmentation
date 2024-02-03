@@ -84,8 +84,8 @@ def main_loop():
       message_filters.Subscriber(topic, Image)
       for topic in rospy.get_param('~image_topics')
   ]
-  lidar_subscriber = message_filters.Subscriber(
-      rospy.get_param('~pointcloud_topic'), PointCloud2)
+  #lidar_subscriber = message_filters.Subscriber(
+      #rospy.get_param('~pointcloud_topic'), PointCloud2)
   # publishers for segmentation maps
   img_pubs = [
       rospy.Publisher(topic, Image, queue_size=10)
@@ -103,8 +103,8 @@ def main_loop():
     return tf.squeeze(tf.nn.softmax(model(batch), axis=-1)[..., 1] * 255)
 
   # only get those images that will be synchronized to the lidar
-  synchronizer = message_filters.ApproximateTimeSynchronizer(
-      [lidar_subscriber] + image_subscribers, 10, 0.1)
+  synchronizer = message_filters.ApproximateTimeSynchronizer(image_subscribers, 10, 0.1)
+      #[lidar_subscriber] + image_subscribers, 10, 0.1)
   synchronizer.registerCallback(lambda *x: callback(pred_func, img_pubs, *x))
   rospy.spin()
 

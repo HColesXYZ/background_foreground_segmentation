@@ -2,7 +2,7 @@
 
   <arg name="rosbag" default="" />
   <arg name="out" default="out.bag" />
-  <arg name="rate" default="0.5" />
+  <arg name="rate" default="1" />
 
   <!-- Proper Output Info -->
   <env name="ROSCONSOLE_FORMAT" value="[${severity}] (${node}) [${time}]: ${message}\n" />
@@ -14,6 +14,6 @@
         args="--clock -d 1 -r $(arg rate) $(arg rosbag)"
         />
 
-  <include file="$(find background_foreground_segmentation)/launch/alphasense_tools/pickelhaube_calibrations.launch" />
+  <include file="$(find background_foreground_segmentation)/launch/isaac_tools/isaac_calibrations.launch" />
 
 </launch>

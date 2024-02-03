@@ -29,11 +29,10 @@
         args="0.016893 -0.045470 0.106389 -0.712754 -0.019267 0.010382 0.701072 rslidar IMUFRAME" />
         <!-- x y z qx qy qz qw frame_id child_frame_id -->
 
-
   <node pkg="image_undistort"
         type="image_undistort_node"
         name="cam0_undistorter">
-    <rosparam file="$(find background_foreground_segmentation)/launch/alphasense_tools/cam0_intr.yaml"/>
+    <rosparam file="$(find background_foreground_segmentation)/launch/isaac_tools/cam0_intr.yaml"/>
     <param name="input_camera_info_from_ros_params" value="true"/>
     <param name="input_camera_namespace" value="cam0"/>
     <param name="output_frame" value="cam0_rectified_frame"/>
@@ -44,9 +43,9 @@
   <node pkg="image_undistort"
         type="image_undistort_node"
         name="cam1_undistorter">
-    <rosparam file="$(find background_foreground_segmentation)/launch/alphasense_tools/cam1_intr.yaml"/>
+    <rosparam file="$(find background_foreground_segmentation)/launch/isaac_tools/cam1_intr.yaml"/>
     <param name="input_camera_info_from_ros_params" value="true"/>
-    <param name="input_camera_namespace" value="cam0"/>
+    <param name="input_camera_namespace" value="cam1"/>
     <param name="output_frame" value="cam1_rectified_frame"/>
     <remap from="input/image" to="/rgb_back"/>
     <remap from="output/image" to="/pickelhaube/cam1/image"/>
@@ -55,9 +54,9 @@
   <node pkg="image_undistort"
         type="image_undistort_node"
         name="cam2_undistorter">
-    <rosparam file="$(find background_foreground_segmentation)/launch/alphasense_tools/cam2_intr.yaml"/>
+    <rosparam file="$(find background_foreground_segmentation)/launch/isaac_tools/cam2_intr.yaml"/>
     <param name="input_camera_info_from_ros_params" value="true"/>
-    <param name="input_camera_namespace" value="cam0"/>
+    <param name="input_camera_namespace" value="cam2"/>
     <param name="output_frame" value="cam2_rectified_frame"/>
     <remap from="input/image" to="/rgb_left"/>
     <remap from="output/image" to="/pickelhaube/cam2/image"/>
@@ -66,9 +65,9 @@
   <node pkg="image_undistort"
         type="image_undistort_node"
         name="cam3_undistorter">
-    <rosparam file="$(find background_foreground_segmentation)/launch/alphasense_tools/cam3_intr.yaml"/>
+    <rosparam file="$(find background_foreground_segmentation)/launch/isaac_tools/cam3_intr.yaml"/>
     <param name="input_camera_info_from_ros_params" value="true"/>
-    <param name="input_camera_namespace" value="cam0"/>
+    <param name="input_camera_namespace" value="cam3"/>
     <param name="output_frame" value="cam3_rectified_frame"/>
     <remap from="input/image" to="/rgb_right"/>
     <remap from="output/image" to="/pickelhaube/cam3/image"/>

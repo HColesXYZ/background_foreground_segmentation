@@ -18,7 +18,6 @@ from bfseg.settings import TMPDIR
 
 tf.executing_eagerly()
 
-
 def load_gdrive_file(file_id,
                      ending='',
                      output_folder=os.path.expanduser('~/.keras/datasets')):
@@ -31,47 +30,46 @@ def load_gdrive_file(file_id,
                    quiet=False)
   return filename
 
-
-def callback(pred_func, img_pubs, pointcloud, *image_msgs):
+def callback(pred_func, img_pubs, *image_msgs):
   """ Gets executed every time we get an image from the camera"""
   # Set headers for camera info
   startTime = time.time()
-  # Get Images from message data
-  imgs = []
-  img_shapes = []
-  img_headers = []
-  for msg in image_msgs:
-    img = np.frombuffer(msg.data, dtype=np.uint8)
-    img = img.reshape(msg.height, msg.width, 3)
-    # Convert BGR to RGB
-    if 'bgr' in msg.encoding.lower():
-      img = img[:, :, [2, 1, 0]]
-    img_shapes.append((msg.height, msg.width))
-    img_headers.append(msg.header)
-    # resize to common input format
-    img = tf.image.convert_image_dtype(tf.convert_to_tensor(img), tf.float32)
-    img = tf.image.resize(
-        img,
-        (rospy.get_param('~input_height'), rospy.get_param('~input_width')))
-    imgs.append(img)
 
-  # predict batch of images
-  final_prediction = pred_func(tf.stack(imgs, axis=0))
-  for i, pred in enumerate(tf.unstack(final_prediction, axis=0)):
-    # resize each prediction to the original image size
-    prediction = tf.image.resize(pred[..., tf.newaxis], img_shapes[i],
-                                 tf.image.ResizeMethod.BILINEAR)
-    # convert to numpy
-    prediction = prediction.numpy().astype('uint8')
-    # Create and publish image message
-    img_msg = Image()
-    img_msg.header = img_headers[i]
-    img_msg.height = img_shapes[i][0]
-    img_msg.width = img_shapes[i][1]
-    img_msg.step = img_msg.width
-    img_msg.data = prediction.flatten().tolist()
-    img_msg.encoding = "mono8"
-    img_pubs[i].publish(img_msg)
+  for msg, pub in zip(image_msgs, img_pubs):
+      img = np.frombuffer(msg.data, dtype=np.uint8)
+      #img = np.rot90(img, k=1)
+      if rospy.get_param('~pseudo_rgb'):
+        img = img.reshape(msg.height, msg.width)
+        img = np.repeat(np.expand_dims(img, axis=-1), 3, axis=-1)
+      else:
+        img = img.reshape(msg.height, msg.width, 3)
+
+      # Convert BGR to RGB
+      if 'bgr' in msg.encoding.lower():
+          img = img[:, :, [2, 1, 0]]
+
+      # resize to common input format
+      img = tf.image.convert_image_dtype(tf.convert_to_tensor(img), tf.float32)
+      img = tf.image.resize(img, (rospy.get_param('~input_height'), rospy.get_param('~input_width')))
+
+      # Predict
+      pred = pred_func(tf.expand_dims(img, 0))
+
+      # Resize prediction
+      prediction = tf.image.resize(pred[..., tf.newaxis], (msg.height, msg.width), tf.image.ResizeMethod.BILINEAR)
+
+      # Convert to numpy
+      prediction = prediction.numpy().astype('uint8')
+
+      # Create and publish image message
+      img_msg = Image()
+      img_msg.header = msg.header
+      img_msg.height = msg.height
+      img_msg.width = msg.width
+      img_msg.step = msg.width
+      img_msg.data = prediction.flatten().tolist()
+      img_msg.encoding = "mono8"
+      pub.publish(img_msg)
 
   timeDiff = time.time() - startTime
   print("published segmented images in {:.4f}s, {:.4f} FPs".format(
@@ -84,9 +82,6 @@ def main_loop():
       message_filters.Subscriber(topic, Image)
       for topic in rospy.get_param('~image_topics')
   ]
-  lidar_subscriber = message_filters.Subscriber(
-      rospy.get_param('~pointcloud_topic'), PointCloud2)
-  # publishers for segmentation maps
   img_pubs = [
       rospy.Publisher(topic, Image, queue_size=10)
       for topic in rospy.get_param('~segmentation_output_topics')
@@ -102,12 +97,9 @@ def main_loop():
     # predict batch of images
     return tf.squeeze(tf.nn.softmax(model(batch), axis=-1)[..., 1] * 255)
 
-  # only get those images that will be synchronized to the lidar
-  synchronizer = message_filters.ApproximateTimeSynchronizer(
-      [lidar_subscriber] + image_subscribers, 10, 0.1)
+  synchronizer = message_filters.ApproximateTimeSynchronizer(image_subscribers, 10, 0.1)
   synchronizer.registerCallback(lambda *x: callback(pred_func, img_pubs, *x))
   rospy.spin()
-
 
 if __name__ == '__main__':
   try:

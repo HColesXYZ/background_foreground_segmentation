@@ -1,0 +1,7 @@
+cam0:
+  camera_model: pinhole
+  distortion_coeffs: [0.07368504443481697, 0.18617263304860857, -0.7330564280919012, 1.2568695228792877]
+  distortion_model: equidistant
+  intrinsics: [517.1669031636065, 518.175150285817, 322.9339925534183, 234.59829637147223]
+  resolution: [640, 480]
+  rostopic: /helios_left/image_raw

@@ -6,27 +6,22 @@
   <node pkg="tf2_ros"
         type="static_transform_publisher"
         name="imu_cam0_transformer"
-        args="0.05 0.0 0.0 0.5 -0.5 0.5 -0.5 IMUFRAME cam0_sensor_frame" />
+        args="0.05 0.0 0.0 0.5 -0.5 0.5 -0.5 Base camera_front" />
         <!-- x y z qx qy qz qw frame_id child_frame_id -->
   <node pkg="tf2_ros"
         type="static_transform_publisher"
         name="imu_cam1_transformer"
-        args="-0.05 0.0 0.0 0.5 0.5 -0.5 -0.5 IMUFRAME cam1_sensor_frame" />
+        args="-0.05 0.0 0.0 0.5 0.5 -0.5 -0.5 Base camera_back" />
         <!-- x y z qx qy qz qw frame_id child_frame_id -->
   <node pkg="tf2_ros"
         type="static_transform_publisher"
         name="imu_cam2_transformer"
-        args="0.0 0.05 0.0 0.707 0.0 0.0 -0.707 IMUFRAME cam2_sensor_frame" />
+        args="0.0 0.05 0.0 0.707 0.0 0.0 -0.707 Base camera_left" />
         <!-- x y z qx qy qz qw frame_id child_frame_id -->
   <node pkg="tf2_ros"
         type="static_transform_publisher"
         name="imu_cam3_transformer"
-        args="0.0 -0.05 0.0 0.0 0.707 -0.707 0.0 IMUFRAME cam3_sensor_frame" />
-        <!-- x y z qx qy qz qw frame_id child_frame_id -->
-  <node pkg="tf2_ros"
-        type="static_transform_publisher"
-        name="imu_lidar_broadcaster"
-        args="0.016893 -0.045470 0.106389 -0.712754 -0.019267 0.010382 0.701072 rslidar IMUFRAME" />
+        args="0.0 -0.05 0.0 0.0 0.707 -0.707 0.0 Base camera_right" />
         <!-- x y z qx qy qz qw frame_id child_frame_id -->
 
   <node pkg="image_undistort"
@@ -72,5 +67,15 @@
     <remap from="input/image" to="/rgb_right"/>
     <remap from="output/image" to="/pickelhaube/cam3/image"/>
     <remap from="output/camera_info" to="/pickelhaube/cam3/camera_info"/>
+  </node>
+    <node pkg="image_undistort"
+        type="image_undistort_node"
+        name="depth0_undistorter">
+    <rosparam file="$(find background_foreground_segmentation)/launch/isaac_tools/cam0_intr.yaml"/>
+    <param name="input_camera_info_from_ros_params" value="true"/>
+    <param name="input_camera_namespace" value="cam0"/>
+    <remap from="input/image" to="/depth_front"/>
+    <remap from="output/image" to="/depth_front/undistort"/>
+    <remap from="output/camera_info" to="/depth_front/camera_info"/>
   </node>
 </launch>

@@ -37,6 +37,12 @@ cs_add_executable(${PROJECT_NAME}_node2
 cs_add_executable(cloud_filtering_node
         src/cloud_filtering_node.cpp
         )
+cs_add_executable(depth_filtering_node
+        src/depth_filtering_node.cpp
+        )
+cs_add_executable(depth_filtering_node2
+        src/depth_filtering_node2.cpp
+        )
 
 target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME})
 target_link_libraries(${PROJECT_NAME}_node2 ${PROJECT_NAME}2)

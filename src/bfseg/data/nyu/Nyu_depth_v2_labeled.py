@@ -1,113 +1,105 @@
-# Copyright 2022 The HuggingFace Datasets Authors and the current dataset script contributor.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-"""NYU-Depth V2."""
-
-
-import io
-
-import datasets
-import h5py
+"""Nyu_depth_v2_labeled dataset."""
+import tensorflow as tf
+import tensorflow_datasets as tfds
 import numpy as np
+import os
 
-_CITATION = """\
+# TODO(Nyu_depth_v2_labeled): Markdown description  that will appear on the catalog page.
+_DESCRIPTION = """
+The NYU-Depth V2 labeled data set is comprised of video sequences from a variety of indoor scenes as recorded by both the RGB and Depth cameras from the Microsoft Kinect.
+It contains 1449 densely labeled pairs of aligned RGB and depth images.
+"""
+
+# TODO(Nyu_depth_v2_labeled): BibTeX citation
+_CITATION = """
 @inproceedings{Silberman:ECCV12,
   author    = {Nathan Silberman, Derek Hoiem, Pushmeet Kohli and Rob Fergus},
   title     = {Indoor Segmentation and Support Inference from RGBD Images},
   booktitle = {ECCV},
   year      = {2012}
 }
-@inproceedings{icra_2019_fastdepth,
-  author    = {Wofk, Diana and Ma, Fangchang and Yang, Tien-Ju and Karaman, Sertac and Sze, Vivienne},
-  title     = {FastDepth: Fast Monocular Depth Estimation on Embedded Systems},
-  booktitle = {IEEE International Conference on Robotics and Automation (ICRA)},
-  year      = {2019}
-}
 """
 
-_DESCRIPTION = """\
-The NYU-Depth V2 data set is comprised of video sequences from a variety of indoor scenes as recorded by both the RGB and Depth cameras from the Microsoft Kinect.
-"""
-
-_HOMEPAGE = "https://cs.nyu.edu/~silberman/datasets/nyu_depth_v2.html"
-
-_LICENSE = "Apace 2.0 License"
-
-_URLS = {
-    "train": [f"data/train-{i:06d}.tar" for i in range(12)],
-    "val": [f"data/val-{i:06d}.tar" for i in range(2)],
-}
-
-_IMG_EXTENSIONS = [".h5"]
+_URL = 'http://horatio.cs.nyu.edu/mit/silberman/nyu_depth_v2/nyu_depth_v2_labeled.mat'
 
 
-class NyuDepthV2Labeled(datasets.GeneratorBasedBuilder):
-    """NYU-Depth V2 dataset."""
+class NyuDepthV2Labeled(tfds.core.GeneratorBasedBuilder):
+  """DatasetBuilder for Nyu_depth_v2_labeled dataset."""
 
-    VERSION = datasets.Version("1.0.0")
+  VERSION = tfds.core.Version('2.1.0')
+  RELEASE_NOTES = {
+      # '1.0.0': 'Initial release.',
+      # '2.0.0': 'different scenes for train/test',
+      '2.1.0': 'additional "full" split',
+  }
 
-    def _info(self):
-        features = datasets.Features(
-            {"image": datasets.Image(), "depth_map": datasets.Image()}
-        )
-        return datasets.DatasetInfo(
-            description=_DESCRIPTION,
-            features=features,
-            homepage=_HOMEPAGE,
-            license=_LICENSE,
-            citation=_CITATION,
-        )
+  # MANUAL_DOWNLOAD_INSTRUCTIONS = 1
 
-    def _is_image_file(self, filename):
-        # Reference: https://github.com/dwofk/fast-depth/blob/master/dataloaders/dataloader.py#L21-L23
-        return any(filename.endswith(extension) for extension in _IMG_EXTENSIONS)
+  def _info(self) -> tfds.core.DatasetInfo:
+    """Returns the dataset metadata."""
+    # TODO(Nyu_depth_v2_labeled): Specifies the tfds.core.DatasetInfo object
+    return tfds.core.DatasetInfo(
+        builder=self,
+        description=_DESCRIPTION,
+        features=tfds.features.FeaturesDict({
+            'image': tfds.features.Image(shape=(480, 640, 3), dtype=tf.uint8),
+            'label': tfds.features.Tensor(shape=(480, 640), dtype=tf.uint8),
+        }),
+        supervised_keys=("image", "label"),  # e.g. ('image', 'label')
+        homepage='https://cs.nyu.edu/~silberman/datasets/nyu_depth_v2.html/',
+        citation=_CITATION,
+    )
 
-    def _h5_loader(self, bytes_stream):
-        # Reference: https://github.com/dwofk/fast-depth/blob/master/dataloaders/dataloader.py#L8-L13
-        f = io.BytesIO(bytes_stream)
-        h5f = h5py.File(f, "r")
-        rgb = np.array(h5f["rgb"])
-        rgb = np.transpose(rgb, (1, 2, 0))
-        depth = np.array(h5f["depth"])
-        return rgb, depth
+  def _split_generators(self, dl_manager: tfds.download.DownloadManager):
+    """Returns SplitGenerators."""
+    # (Nyu_depth_v2_labeled): Downloads the data and defines the splits
+    # dl_manager is a tfds.download.DownloadManager that can be used to
+    # download and extract URLs
+    download_dir = dl_manager.download(_URL)
+    return [
+        tfds.core.SplitGenerator(
+            name=tfds.Split.TRAIN,
+            # These kwargs will be passed to _generate_examples
+            gen_kwargs={
+                'dataset_path': download_dir,
+                'scene_type': 'kitchen',
+            },
+        ),
+        tfds.core.SplitGenerator(
+            name=tfds.Split.TEST,
+            gen_kwargs={
+                'dataset_path': download_dir,
+                'scene_type': 'bedroom',
+            },
+        ),
+        tfds.core.SplitGenerator(
+            name='full',
+            gen_kwargs={
+                'dataset_path': download_dir,
+                'scene_type': None,
+            },
+        ),
+    ]
 
-    def _split_generators(self, dl_manager):
-        archives = dl_manager.download(_URLS)
-
-        return [
-            datasets.SplitGenerator(
-                name=datasets.Split.TRAIN,
-                gen_kwargs={
-                    "archives": [
-                        dl_manager.iter_archive(archive) for archive in archives["train"]
-                    ]
-                },
-            ),
-            datasets.SplitGenerator(
-                name=datasets.Split.VALIDATION,
-                gen_kwargs={
-                    "archives": [
-                        dl_manager.iter_archive(archive) for archive in archives["val"]
-                    ]
-                },
-            ),
-        ]
-
-    def _generate_examples(self, archives):
-        idx = 0
-        for archive in archives:
-            for path, file in archive:
-                if self._is_image_file(path):
-                    image, depth = self._h5_loader(file.read())
-                    yield idx, {"image": image, "depth_map": depth}
-                    idx += 1
+  def _generate_examples(self, dataset_path, scene_type):
+    """Yields examples."""
+    # (Nyu_depth_v2_labeled): Yields (key, example) tuples from the dataset
+    h5py = tfds.core.lazy_imports.h5py
+    with h5py.File(dataset_path, 'r') as f:
+      images = np.array(f['images'], dtype=f['images'].dtype).T.squeeze()
+      labels = np.array(f['labels'], dtype=f['labels'].dtype).T.squeeze()
+      scene_types = [
+          f[f["sceneTypes"][0, i]][:, 0].tobytes().decode("utf-16")
+          for i in range(f["sceneTypes"].shape[1])
+      ]
+      for i in range(images.shape[-1]):
+        # Label_expand = np.expand_dims(labels[:,:,i], axis=2)
+        if scene_type is None or scene_types[i] == scene_type:
+          label = labels[:, :, i]
+          combine_label = np.logical_or(
+              label == 4,
+              (np.logical_or(label == 11, label == 21))).astype(np.uint8)
+          yield str(i).zfill(4), {
+              'image': images[:, :, :, i],
+              'label': combine_label
+          }

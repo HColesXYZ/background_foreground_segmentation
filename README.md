@@ -281,3 +281,33 @@ We implement the following methods for continual learning:
 - Feature distillation
 - Output distillation
 - [EWC](https://arxiv.org/pdf/1612.00796.pdf)
+
+## XYZ Addons
+
+Once you have setup everything as above a typical startup and run procedure will look like this (I used `python3 -m venv env1` to create my virtual environment):
+  ```bash
+  cd $CATKIN_WS
+  source env1/bin/activate
+  source devel/setup.bash
+  ```
+  Then you can run pickelhaube, Isaac or ToF example as follows:
+  - `roslaunch background_foreground_segmentation pickelhaube_segmentation_test.launch`
+  - `roslaunch background_foreground_segmentation isaac_full.launch`
+  - `roslaunch background_foreground_segmentation tof_full.launch`
+
+The Isaac Data was made with the [isaac_2023](https://github.com/XYZReality/InfiniteNavScripts/tree/isaac_2023/isaac_scripts/pillsim) repo
+
+The ToF Data is from the test rig and was bagged using the [all_data_bagger.py](https://github.com/XYZReality/InfiniteNavScripts/blob/camera_calib/processing_scripts/all_data_bagger.py)
+
+If you are experiencing Errors during building here are some useful commands I found that are not provided by the author:
+  ```bash
+  pip install -r requirements.txt
+  pip install empy==3.3.4
+  sudo apt-get install ros-noetic-libpointmatcher # try ros-noetic-* for other missing parts
+  pip install numpy==1.23.4  # newest version of numpy with np.object not removed
+  ```
+Make sure your `settings.py` looks something like this:
+  ```bash
+TMPDIR = '/tmp'  # a temporary storage folder
+EXPERIMENT_STORAGE_FOLDER = '/home/hunter/Documents/AI/BFGS/src/background_foreground_segmentation/logs' # a folder where training logs should be stored
+  ```
